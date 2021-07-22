@@ -59,10 +59,10 @@
 
 ## 回调事件
 - SocketServer	服务端
-	- on("onConnect", () => { })	//客户端建立连接回调
-	- on("onDisconnect", () => { })	// 客户端断开连接回调
-	- on("onReceive", (dataPack) => { })	// 接收报文回调
-	- on("onSend", (dataPack) => { })	// 发送报文回调
+	- on("onConnect", (socket) => { })	//客户端建立连接回调
+	- on("onDisconnect", (socket, hadError) => { })	// 客户端断开连接回调
+	- on("onReceive", (socket, dataPack) => { })	// 接收报文回调
+	- on("onSend", (socket, dataPack) => { })	// 发送报文回调
 	- on("onError", (ex) => { })	// 异常捕获回调
 - SocketClient	客户端
 	- on("onConnectSuccess", () => { })	// 连接成功回调
