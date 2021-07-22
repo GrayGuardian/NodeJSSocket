@@ -81,6 +81,7 @@ SocketServer.prototype.checkHeadTimeOut = function () {
         let offset = Date.now() - info.headTime;
         if (offset > HEAD_TIMEOUT) {
             // 超时踢出
+            console.log("超时踢出", socket);
             this.kickOut(socket);
         }
     });
@@ -109,7 +110,7 @@ SocketServer.prototype.kickOutAll = function () {
 
 }
 SocketServer.prototype.closeClient = function (socket) {
-    delete this.clientInfoMap[socket]
+    this.clientInfoMap.delete(socket);
     socket.destroy();
 }
 SocketServer.prototype.receiveHead = function (socket) {

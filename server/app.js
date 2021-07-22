@@ -11,7 +11,7 @@ server.on("onDisconnect", (socket, hadError) => {
 server.on("onReceive", (socket, dataPack) => {
     console.log("client to server >>> ", `${socket.remoteAddress}:${socket.remotePort}`, dataPack.type);
 });
-server.on("onSend", (socket, type, data) => {
+server.on("onSend", (socket, dataPack) => {
     console.log("server to client >>> ", `${socket.remoteAddress}:${socket.remotePort}`, dataPack.type);
 });
 server.on("onError", (ex) => {
