@@ -11,12 +11,13 @@ server.on("onDisconnect", (socket, hadError) => {
 server.on("onReceive", (socket, dataPack) => {
     console.log("client to server >>> ", `${socket.remoteAddress}:${socket.remotePort}`, dataPack.type);
 });
-server.on("onError", (ex) => {
-    console.log("捕获异常 >>> ", ex.code);
-});
 server.on("onSend", (socket, type, data) => {
     console.log("server to client >>> ", `${socket.remoteAddress}:${socket.remotePort}`, dataPack.type);
 });
+server.on("onError", (ex) => {
+    console.log("捕获异常 >>> ", ex.code);
+});
+
 server.listen((server) => {
     console.log(`创建SocketServer >>> ${server.address().address}:${server.address().port}`);
 });
