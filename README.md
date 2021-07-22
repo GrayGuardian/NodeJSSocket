@@ -1,8 +1,6 @@
 # NodeJsSocket
 该项目是基于NodeJs平台 纯JS编写的Socket网络模块，包括客户端与服务端的实现 
 
-（针对Unity对线程的不友好，做了部分处理，本质是还是纯粹的C#代码编写，可以随意移植）
-
 **基于Unity平台下的Socket网络通信模块** >>> [前往项目](https://github.com/GrayGuardian/UnitySocket)
 
 ## 环境依赖 
