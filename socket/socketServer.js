@@ -11,13 +11,34 @@ var SocketServer = function (ip, port) {
     this.ip = ip
     this.port = port
 
-    this.clientInfoMap = new Map();
-
-    this.dataBuffer = new DataBuffer();
+    this.cb = {};
 };
+SocketServer.prototype.onConnect = function (socket) {
+    this.call("onConnect", socket);
+}
+SocketServer.prototype.onDisconnect = function (socket, hadError) {
+    this.call("onDisconnect", socket, hadError);
+}
+SocketServer.prototype.onReceive = function (socket, dataPack) {
+    this.call("onReceive", socket, dataPack);
+}
+SocketServer.prototype.onSend = function (socket, dataPack) {
+    this.call("onSend", socket, dataPack);
+}
+SocketServer.prototype.onError = function (ex) {
+    this.call("onError", ex);
+}
+
 SocketServer.prototype.listen = function (cb) {
+    this.clientInfoMap = new Map();
+    this.dataBuffer = new DataBuffer();
+
     this.server = new net.createServer();
+    this.server.on('error', function (ex) {
+        this.onError(ex);
+    });
     this.server.on("connection", (socket) => {
+        this.clientInfoMap.set(socket, { headTime: Date.now() });
         this.onConnect(socket);
         socket.on("data", (data) => {
             this.dataBuffer.addBuffer(data);
@@ -39,13 +60,16 @@ SocketServer.prototype.listen = function (cb) {
         });
         socket.on("close", (hadError) => {
             this.onDisconnect(socket, hadError);
+            this.closeClient(socket);
+        });
+        socket.on("error", () => {
         });
     });
     this.server.listen(this.port, this.ip, () => {
-        setInterval(() => {
+        this.headCheckInterval = setInterval(() => {
             this.checkHeadTimeOut();
         }, HEAD_CHECKTIME);
-        if (cb != null) cb(this.server);
+        if (cb != null) cb(this);
     });
 }
 SocketServer.prototype.checkHeadTimeOut = function () {
@@ -65,9 +89,8 @@ SocketServer.prototype.checkHeadTimeOut = function () {
 SocketServer.prototype.send = function (socket, type, data, cb) {
     let dataPack = new SocketDataPack(type, data);
     socket.write(dataPack.buff, "utf8", () => {
-        // 此处可广播回调
-        console.log("server to client >>> ", `${socket.remoteAddress}:${socket.remotePort}`, dataPack.type);
-        if (cb != null) cb();
+        if (cb != null) cb(socket, dataPack);
+        this.onSend(socket, dataPack);
     });
 }
 SocketServer.prototype.kickOut = function (socket) {
@@ -93,22 +116,38 @@ SocketServer.prototype.receiveHead = function (socket) {
     this.clientInfoMap.set(socket, { headTime: Date.now() });
     // console.log("更新心跳包间隔 >>> now > ", Date.now());
 }
-SocketServer.prototype.onConnect = function (socket) {
-    this.clientInfoMap.set(socket, { headTime: Date.now() });
-    // 此处可广播回调
-    console.log("客户端连接 >>> ", `${socket.remoteAddress}:${socket.remotePort}`);
+SocketServer.prototype.close = function (cb) {
+    if (this.headCheckInterval != null) {
+        clearInterval(this.headCheckInterval);
+    }
+    this.server.close(() => { if (cb != null) cb(); });
+}
+SocketServer.prototype.address = function () {
+    return this.server.address();
 }
 
-SocketServer.prototype.onReceive = function (socket, dataPack) {
-    // 此处可广播回调
-    console.log("client to server >>> ", `${socket.remoteAddress}:${socket.remotePort}`, dataPack.type);
+SocketServer.prototype.on = function (type, cb) {
+    if (type == null || cb == null) return;
+    if (this.cb[type] == null) {
+        this.cb[type] = [];
+    }
+    this.cb[type].push(cb);
+}
+SocketServer.prototype.off = function (type, cb) {
+    if (type == null || cb == null || this.cb[type] == null || !Array.isArray(this.cb[type])) return;
+    let index = this.cb[type].indexOf(cb);
+    if (index >= 0) {
+        this.cb[type].splice(index, 1);
+    }
+
+}
+SocketServer.prototype.call = function (type, arg1, arg2, arg3, arg4) {
+    if (type == null || this.cb[type] == null || !Array.isArray(this.cb[type])) return;
+    this.cb[type].forEach(cb => {
+        cb(arg1, arg2, arg3, arg4);
+    });
 }
 
-SocketServer.prototype.onDisconnect = function (socket, hadError) {
-    // 此处可广播回调
-    console.log("客户端断开 >>> ", `${socket.remoteAddress}:${socket.remotePort}`, hadError);
-    this.closeClient(socket);
-}
 
 module.exports = function (ip, port) {
     return new SocketServer(ip, port);
