@@ -34,7 +34,7 @@ SocketServer.prototype.listen = function (cb) {
     this.dataBuffer = new DataBuffer();
 
     this.server = new net.createServer();
-    this.server.on('error', function (ex) {
+    this.server.on('error', (ex) => {
         this.onError(ex);
     });
     this.server.on("connection", (socket) => {
